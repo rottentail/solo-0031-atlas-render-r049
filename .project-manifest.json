@@ -62,6 +62,11 @@
       "id": "httpapi",
       "path": "internal/httpapi",
       "responsibility": "有界JSON解析和HTTP接口"
+    },
+    {
+      "id": "statematch",
+      "path": "internal/statematch",
+      "responsibility": "修订归档恢复冻结生命周期的参考模型、状态化验证与失败序列缩减"
     }
   ],
   "workflows": [
@@ -350,6 +355,25 @@
         "通过存储或渲染结果观察已提交事实"
       ],
       "verification": "python3 scripts/walkthrough.py --workflow observe-service"
+    },
+    {
+      "id": "stateful-lifecycle",
+      "name": "状态化生命周期验证",
+      "entry": "go run ./cmd/stateverify",
+      "success": "随机穿插序列与参考模型逐命令一致且全部不变量成立",
+      "failure": "输出按规则归因的反例并缩减为最短可复现序列",
+      "module_ids": [
+        "statematch",
+        "service",
+        "persist",
+        "model"
+      ],
+      "steps": [
+        "生成旧版本编辑、归档、恢复、冻结、撤回与素材退役穿插的命令序列",
+        "同步重放到真实服务与独立参考模型并比对结果、实体、快照、事件",
+        "对失败序列执行前缀裁剪、贪心删除、ddmin与参数简化后重放确认"
+      ],
+      "verification": "go run ./cmd/stateverify --fault none --iterations 200"
     }
   ],
   "complexity": {
